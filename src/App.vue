@@ -1,18 +1,23 @@
 <template>
   <div class='page-grid'>
-    <div class='header'>
-      <h1>Todos</h1>
+    <div class='container'>
+      <div class='header'>
+        <h1>Todos ({{todos.length}})</h1>
+      </div>
+    </div>
+    <div class='container'>
+      <add-todo @addTodo='addTodo' />
     </div>
     <div class='container'>
       <div class='list-view'>
-        <figure v-for="todo in todos" :key="todo.id" class='todo-item'>
-          <i v-if="todo.completed" class="fas fa-check-circle todo-item__status todo-item__status--complete"></i>
-          <i v-else class="far fa-check-circle todo-item__status todo-item__status--incomplete"></i>
-          <div>
-            <h5>{{ todo.title }}</h5>
-            <p v-if="todo.description">{{ todo.description }}</p>
-          </div>
-        </figure>
+        <todo-item
+          v-for="todo in todos"
+          :key="todo.id"
+          :todo='todo'
+          @completeItem='completeItem'
+          @markIncomplete='markIncomplete'
+          @deleteItem='deleteItem'
+        />
       </div>
     </div>
   </div>
@@ -22,9 +27,12 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import AddTodo from './components/AddTodo.vue';
+import TodoItem from './components/Todo.vue';
 export default {
   components: {
-    
+    AddTodo,
+    TodoItem
   },
   data() {
     return {
@@ -56,57 +64,68 @@ export default {
       ]
     }
 
+  },
+  methods: {
+
+    addTodo(todo: string, callback: () => void) {
+      this.todos.unshift({
+        id: 5,
+        title: todo,
+        description: null,
+        completed: false
+      });
+
+      callback();
+    },
+
+    completeItem(id: number){
+      this.todos = this.todos.filter((item) => {
+        if(item.id === id)
+          item.completed = true;
+
+        return item;
+      })
+    },
+
+    markIncomplete(id: number){
+      this.todos = this.todos.filter((item) => {
+        if(item.id === id)
+          item.completed = false;
+
+        return item;
+      })
+    },
+
+    deleteItem(id: number){
+      this.todos = this.todos.filter((item) => item.id !== id);
+    }
+  },
+
+  async created() {
+    const results = await window.fetch(`https://jsonplaceholder.typicode.com/todos`);
+    const response = await results.json();
+    this.todos = response;
   }
 };
 </script>
 
 
-<style lang="scss">
+<style scoped lang="scss">
 
-  .page-grid {
-    display: grid;
-    grid-template-rows: 12rem;
-  }
+.header{
+  margin-bottom: 2rem;
+}
 
-  .header {
-    background: white;
-    box-shadow: 0 1rem 1rem rgba(black, .1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+.container {
+  width: 95%;
+  max-width: 120rem;
+  margin: 0 auto;
+}
 
-  .container{
-    width: 95%;
-    max-width: 120rem;
-    margin: 0 auto;
-  }
-
-  .list-view {
-    padding-top: 3rem;
-  }
-
-  .todo-item{
-    margin-bottom: 3rem;
-    padding: 2rem;
-    background: white;
-    box-shadow: 0 .5rem 1.2rem rgba(black, .1);
-    border: 1px solid rgb(221, 221, 221);
-    display: flex;
-    align-items: center;
-
-    &__status{
-      font-size: 2rem;
-      margin-right: 2rem;
-
-      &--complete{
-        color: green;
-      }
-
-      &--incomplete{
-        color: red;
-      }
-    }
-  }
+.list-view{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 2rem;
+}
 
 </style>
